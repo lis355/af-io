@@ -1,22 +1,28 @@
 ﻿using System;
+using System.IO.Ports;
+using System.Linq;
 
 namespace AfIOSharp
 {
-    class Program
+    public class Program
     {
-        const string _kSettingsFilePath = "io-settings.xml";
-
-        static void Main()
+        public static void Main()
         {
-            var serializer = new XmlSerializer<Settings>();
-            var settings = serializer.Deserialize(_kSettingsFilePath);
+            PrintAvaliablePorts();
 
-            var gps = new GPS(settings.GPSSerialPort);
-            gps.Start();
+            var devicesManager = new IODevicesManager();
+            devicesManager.Start();
 
             Console.ReadKey();
 
-            gps.Finish();
+            devicesManager.Finish();
+        }
+
+        static void PrintAvaliablePorts()
+        {
+            Console.WriteLine("Avaliable ports:");
+            SerialPort.GetPortNames().ToList().ForEach(Console.WriteLine);
+            Console.WriteLine();
         }
     }
 }
