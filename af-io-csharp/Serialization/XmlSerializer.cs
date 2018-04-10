@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace AfIOSharp
+namespace AFIO
 {
     public class XmlSerializer<T> : Serializer<T>
     {

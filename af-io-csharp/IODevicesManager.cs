@@ -1,13 +1,17 @@
 ﻿using System.IO;
+using AFIO.Geoposition;
+using AFIO.Network;
 
-namespace AfIOSharp
+namespace AFIO
 {
     public class IODevicesManager : ISprintable
     {
         const string _kSettingsFilePath = "io-settings.xml";
 
         readonly Settings _settings;
-        GPS _gps;
+
+        public GPS GPS { get; private set; }
+        public LORA Network { get; private set; }
 
         public IODevicesManager()
         {
@@ -20,13 +24,17 @@ namespace AfIOSharp
 
         public void Start()
         {
-            _gps = new GPS(_settings.GPSSerialPort);
-            _gps.Start();
+            //GPS = new GPS(_settings.GPSSerialPortName);
+            //GPS.Start();
+
+            Network = new LORA(_settings.LoraSerialPortName, _settings.LoraBaudRate);
+            Network.Start();
         }
 
         public void Finish()
         {
-            _gps.Finish();
+            Network.Finish();
+            //GPS.Finish();
         }
     }
 }

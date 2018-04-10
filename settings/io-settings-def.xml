@@ -1,3 +1,5 @@
 <Settings>
-  <GPSSerialPort>COM3</GPSSerialPort>
+  <GPSSerialPortName>COM3</GPSSerialPortName>
+  <LoraSerialPortName>COM5</LoraSerialPortName>
+  <LoraBaudRate>9600</LoraBaudRate>
 </Settings>

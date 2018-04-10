@@ -2,7 +2,7 @@
 using System.IO.Ports;
 using System.Linq;
 
-namespace AfIOSharp
+namespace AFIO
 {
     public class Program
     {

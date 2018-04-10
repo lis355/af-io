@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using NMEA;
 
-namespace AfIOSharp
+namespace AFIO.Geoposition
 {
     // NMEA 0183 sentence parser/builder https://www.codeproject.com/Articles/279647/NMEA-sentence-parser-builder 
     // NMEA sentences http://www.gpsinformation.org/dale/nmea.htm#nmea
@@ -17,6 +17,10 @@ namespace AfIOSharp
         readonly SerialPort _port;
         StringBuilder _buffer;
         readonly Dictionary<SentenceIdentifiers, Action<object[]>> _cmdProcessor;
+        
+        public bool IsDataValid { get; private set; }
+        public double Latitude { get; private set; }
+        public double Longitude { get; private set; }
 
         public GPS(string portName)
         {
@@ -107,21 +111,23 @@ namespace AfIOSharp
             if (parameters[5].ToString() != "Valid")
                 return;
 
+            IsDataValid = true;
+
             // TODO timeFix use
             //var timeFix = (DateTime)parameters[4];
 
-            var lat = (double)parameters[0];
+            Latitude = (double)parameters[0];
             var latC = (Cardinals)Enum.Parse(typeof(Cardinals), (string)parameters[1]);
             if (latC == Cardinals.South)
-                lat = -lat;
+                Latitude = -Latitude;
 
-            var lon = (double)parameters[2];
+            Longitude = (double)parameters[2];
             var lonC = (Cardinals)Enum.Parse(typeof(Cardinals), (string)parameters[3]);
             if (lonC == Cardinals.West)
-                lon = -lon;
+                Longitude = -Longitude;
 
             // DEBUG
-            Console.WriteLine("{0:F.4} {1:F.4}", lat, lon);
+            Console.WriteLine("{0:F.4} {1:F.4}", Latitude, Longitude);
         }
     }
 }

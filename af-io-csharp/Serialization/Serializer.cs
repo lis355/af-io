@@ -1,4 +1,4 @@
-﻿namespace AfIOSharp
+﻿namespace AFIO
 {
     public abstract class Serializer<T>
     {

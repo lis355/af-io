@@ -1,10 +1,12 @@
 ﻿using System;
 
-namespace AfIOSharp
+namespace AFIO
 {
     [Serializable]
     public class Settings
     {
-        public string GPSSerialPort;
+        public string GPSSerialPortName;
+        public string LoraSerialPortName;
+        public int LoraBaudRate;
     }
 }
