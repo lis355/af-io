@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace AFIO.Network
@@ -26,11 +25,9 @@ namespace AFIO.Network
 
         readonly SerialPort _port;
         EMode _mode;
-
         byte[] _buffer;
         readonly List<byte> _listBuffer = new List<byte>();
-
-        Action dataReceivedCallback; 
+        Action _dataReceivedCallback; 
 
         public event Action<byte[]> OnPacketReceived;
 
@@ -53,17 +50,6 @@ namespace AFIO.Network
 
                 SetMode(EMode.Data);
 
-                OnPacketReceived += bytes =>
-                {
-                    Console.WriteLine(Encoding.UTF8.GetString(bytes));
-                };
-
-                SendPacket(Encoding.UTF8.GetBytes("PRIVET 1"));
-                SendPacket(Encoding.UTF8.GetBytes("PRIVET 2"));
-                SendPacket(Encoding.UTF8.GetBytes("PRIVET 3"));
-                SendPacket(Encoding.UTF8.GetBytes("PRIVET 4"));
-                SendPacket(Encoding.UTF8.GetBytes("PRIVET 5"));
-
                 //SendCommand(_kCommandReadVersion, () =>
                 //{
                 //    if (_listBuffer.Count < 4)
@@ -81,13 +67,13 @@ namespace AFIO.Network
             if (_port.IsOpen)
                 _port.Close();
         }
-
-        int y = 0;
-
+        
         public void SendPacket(byte[] data)
         {
             if (_mode != EMode.Data)
                 SetMode(EMode.Data);
+
+            // TODO big length buffering
 
             // Packet structure
             // Data in cobs ..... n bytes
@@ -100,20 +86,8 @@ namespace AFIO.Network
             encoded[encodedSize] = (byte)HashCheck.Hash(data);
             encoded[encodedSize + 1] = 0;
 
-            //SendRawData(encoded);
-            // DEBUG
-
-            int i = 0;
-            if (y % 2 == 0)
-            {
-                i = 1;
-                y++;
-            }
-
-            for (; i < encoded.Length; i++)
-                _listBuffer.Add(encoded[i]);
-
-            dataReceivedCallback();
+            // TODO split length
+            SendRawData(encoded);
         }
 
         public void SendRawData(byte[] data)
@@ -129,7 +103,7 @@ namespace AFIO.Network
             if (_mode != EMode.Commands)
                 SetMode(EMode.Commands);
 
-            dataReceivedCallback = callBack;
+            _dataReceivedCallback = callBack;
 
             SendRawData(commandBytes);
         }
@@ -142,8 +116,8 @@ namespace AFIO.Network
             for (int i = 0; i < bufferLength; i++)
                 _listBuffer.Add(_buffer[i]);
 
-            if (dataReceivedCallback != null)
-                dataReceivedCallback();
+            if (_dataReceivedCallback != null)
+                _dataReceivedCallback();
         }
 
         void ProcessRecievedDataInDataMode()
@@ -184,11 +158,11 @@ namespace AFIO.Network
             switch (_mode)
             {
                 case EMode.Data:
-                    dataReceivedCallback = ProcessRecievedDataInDataMode;
+                    _dataReceivedCallback = ProcessRecievedDataInDataMode;
                     break;
 
                 case EMode.Commands:
-                    dataReceivedCallback = null;
+                    _dataReceivedCallback = null;
                     break;
 
                 default:
