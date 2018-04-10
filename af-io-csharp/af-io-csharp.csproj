@@ -47,6 +47,7 @@
     <Compile Include="IODevicesManager.cs" />
     <Compile Include="ISprintable.cs" />
     <Compile Include="LORA\COBS.cs" />
+    <Compile Include="LORA\HashCheck.cs" />
     <Compile Include="LORA\LORA.cs" />
     <Compile Include="LORA\NetworkMessage.cs" />
     <Compile Include="Program.cs" />

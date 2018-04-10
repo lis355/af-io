@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace AFIO.Network
 {
@@ -26,32 +28,14 @@ namespace AFIO.Network
         EMode _mode;
 
         byte[] _buffer;
-        readonly Queue<byte> _listBuffer = new Queue<byte>();
+        readonly List<byte> _listBuffer = new List<byte>();
 
         Action dataReceivedCallback; 
 
-        public event Action<byte[]> OnDataReceived;
+        public event Action<byte[]> OnPacketReceived;
 
         public LORA(string portName, int baudRate)
         {
-            var s = 1024 * 10;
-            var n = 6457;
-            var a = new byte[n];
-            //var b = new byte[s];
-            //var c = new byte[s];
-
-            var r = new Random();
-            for (int i = 0; i < n; i++)
-                a[i] = (byte)r.Next(byte.MaxValue + 1);
-
-            var b = COBS.Encode(a);
-            var c = COBS.Decode(b);
-
-            var eq = true;
-            for (int i = 0; i < n; i++)
-                if (a[i] != c[i])
-                    eq = false;
-
             _port = new SerialPort(portName, baudRate);
             _port.DataReceived += PortOnDataReceived;
 
@@ -66,6 +50,19 @@ namespace AFIO.Network
 
                 _buffer = new byte[_port.ReadBufferSize];
                 _listBuffer.Clear();
+
+                SetMode(EMode.Data);
+
+                OnPacketReceived += bytes =>
+                {
+                    Console.WriteLine(Encoding.UTF8.GetString(bytes));
+                };
+
+                SendPacket(Encoding.UTF8.GetBytes("PRIVET 1"));
+                SendPacket(Encoding.UTF8.GetBytes("PRIVET 2"));
+                SendPacket(Encoding.UTF8.GetBytes("PRIVET 3"));
+                SendPacket(Encoding.UTF8.GetBytes("PRIVET 4"));
+                SendPacket(Encoding.UTF8.GetBytes("PRIVET 5"));
 
                 //SendCommand(_kCommandReadVersion, () =>
                 //{
@@ -85,9 +82,38 @@ namespace AFIO.Network
                 _port.Close();
         }
 
+        int y = 0;
+
         public void SendPacket(byte[] data)
         {
+            if (_mode != EMode.Data)
+                SetMode(EMode.Data);
 
+            // Packet structure
+            // Data in cobs ..... n bytes
+            // Hash of NON ENCODED data 1 bytes
+            // Zero-byte
+
+            var encodedSize = COBS.GetEncodedArraySize(data);
+            var encoded = new byte[encodedSize + 2];
+            COBS.Encode(data, data.Length, encoded);
+            encoded[encodedSize] = (byte)HashCheck.Hash(data);
+            encoded[encodedSize + 1] = 0;
+
+            //SendRawData(encoded);
+            // DEBUG
+
+            int i = 0;
+            if (y % 2 == 0)
+            {
+                i = 1;
+                y++;
+            }
+
+            for (; i < encoded.Length; i++)
+                _listBuffer.Add(encoded[i]);
+
+            dataReceivedCallback();
         }
 
         public void SendRawData(byte[] data)
@@ -114,7 +140,7 @@ namespace AFIO.Network
             _port.Read(_buffer, 0, bufferLength);
 
             for (int i = 0; i < bufferLength; i++)
-                _listBuffer.Enqueue(_buffer[i]);
+                _listBuffer.Add(_buffer[i]);
 
             if (dataReceivedCallback != null)
                 dataReceivedCallback();
@@ -122,14 +148,37 @@ namespace AFIO.Network
 
         void ProcessRecievedDataInDataMode()
         {
-            
+            for (int i = 0; i < _listBuffer.Count; i++)
+            {
+                if (_listBuffer[i] == 0)
+                {
+                    if (i > 2
+                        && OnPacketReceived != null)
+                    {
+                        var dataLength = i - 1;
+                        var data = new byte[dataLength];
+                        for (int j = 0; j < dataLength; j++)
+                            data[j] = _listBuffer[j];
+
+                        var decodedDataLength = COBS.GetDecodedArraySize(data);
+                        var decodedData = new byte[decodedDataLength];
+                        COBS.Decode(data, dataLength, decodedData);
+
+                        var hash = _listBuffer[dataLength];
+                        var computedHash = HashCheck.Hash(decodedData);
+
+                        if (hash == computedHash)
+                            OnPacketReceived(decodedData);
+                    }
+
+                    _listBuffer.RemoveRange(0, i + 1);
+                    i = -1;
+                }
+            }
         }
 
         void SetMode(EMode newMode)
         {
-            if (newMode == _mode)
-                return;
-
             _mode = newMode;
 
             switch (_mode)

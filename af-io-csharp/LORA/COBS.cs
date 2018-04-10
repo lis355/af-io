@@ -2,8 +2,7 @@
 {
     public class COBS
     {
-        // NOTE Slow, always allocate memory. Use int Encode(byte[] input, int length, byte[] output) to prevent memory allocation
-        public static byte[] Encode(byte[] input)
+        public static int GetEncodedArraySize(byte[] input)
         {
             int readIndex = 0, writeIndex = 1, length = input.Length;
             byte distance = 1;
@@ -30,15 +29,10 @@
                 }
             }
 
-            var output = new byte[writeIndex];
-
-            Encode(input, length, output);
-
-            return output;
+            return writeIndex;
         }
-
-        // NOTE Slow, always allocate memory. Use int Decode(byte[] input, int length, byte[] output) to prevent memory allocation
-        public static byte[] Decode(byte[] input)
+        
+        public static int GetDecodedArraySize(byte[] input)
         {
             int readIndex = 0, writeIndex = 0, length = input.Length;
             byte distance, i;
@@ -49,7 +43,7 @@
 
                 if (readIndex + distance > length
                     && distance != 1)
-                    return new byte[0];
+                    return 0;
 
                 readIndex++;
 
@@ -64,11 +58,7 @@
                     writeIndex++;
             }
 
-            var output = new byte[writeIndex];
-
-            Decode(input, length, output);
-
-            return output;
+            return writeIndex;
         }
 
         public static int Encode(byte[] input, int length, byte[] output)
