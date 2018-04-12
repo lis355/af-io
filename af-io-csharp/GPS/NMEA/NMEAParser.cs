@@ -1726,7 +1726,7 @@ namespace NMEA
                 {
                     NMEAProprietarySentence result = new NMEAProprietarySentence();
                     result.Manufacturer = manufacturerID;
-                    result.SentenceIDString = sentenceID;
+                    result.SentenceIdString = sentenceID;
 
                     var formatter = ProprietarySentencesFormats[manufacturerID][sentenceID];
                     result.Parameters = ParseParameters(parameters, formatter);
@@ -1746,25 +1746,25 @@ namespace NMEA
 
         private static NMEAStandartSentence ParseSentence(TalkerIdentifiers talkerID, string sentenceIDString, List<string> parameters)
         {
-            SentenceIdentifiers sentenceID = SentenceIdentifiers.unknown;
+            SentenceIdentifiers sentenceId;
             try
             {
-                sentenceID = (SentenceIdentifiers)Enum.Parse(typeof(SentenceIdentifiers), sentenceIDString);
+                sentenceId = (SentenceIdentifiers)Enum.Parse(typeof(SentenceIdentifiers), sentenceIDString);
             }
             catch
             {
                 throw new ArgumentException(string.Format("Undefined sentence ID \"{0}\" from takler \"{1}\"", sentenceIDString, talkerID));
             }
 
-            var formatter = SentencesFormats[sentenceID];
+            var formatter = SentencesFormats[sentenceId];
             if (string.IsNullOrEmpty(formatter))
             {
-                throw new ArgumentException(string.Format("Specified sentence \"{0}\" from talker \"{1}\" is unknown", sentenceID, talkerID));
+                throw new ArgumentException(string.Format("Specified sentence \"{0}\" from talker \"{1}\" is unknown", sentenceId, talkerID));
             }
 
             NMEAStandartSentence result = new NMEAStandartSentence();
-            result.TalkerID = talkerID;
-            result.SentenceID = sentenceID;
+            result.TalkerId = talkerID;
+            result.SentenceId = sentenceId;
 
             result.Parameters = ParseParameters(parameters, formatter);
 
@@ -1787,7 +1787,7 @@ namespace NMEA
                     if (sentenceDescription.StartsWith(TalkerIdentifiers.P.ToString()))
                     {
                         // Proprietary code
-                        string manufacturerIDString = string.Empty;
+                        string manufacturerIDString;
                         manufacturerIDString = sentenceDescription.Substring(1, 3);
 
                         int start = 1;
@@ -1809,13 +1809,13 @@ namespace NMEA
                     else
                     {
                         // Not a proprietary code
-                        TalkerIdentifiers talkerID = TalkerIdentifiers.unknown;
+                        TalkerIdentifiers talkerId;
                         talkerIDString = sentenceDescription.Substring(0, 2);
                         sentenceIDString = sentenceDescription.Substring(2, 3);
 
                         try
                         {
-                            talkerID = (TalkerIdentifiers)Enum.Parse(typeof(TalkerIdentifiers), talkerIDString);
+                            talkerId = (TalkerIdentifiers)Enum.Parse(typeof(TalkerIdentifiers), talkerIDString);
                         }
                         catch
                         {
@@ -1827,7 +1827,7 @@ namespace NMEA
                             parameters.Add(splits[i]);
                         }
 
-                        return ParseSentence(talkerID, sentenceIDString, parameters);
+                        return ParseSentence(talkerId, sentenceIDString, parameters);
                     }                                        
                 }
                 else
@@ -1994,8 +1994,6 @@ namespace NMEA
 
             if (splits.Length == 3)
             {
-                DateTime result = DateTime.Now;
-
                 int date = int.Parse(splits[0]);
                 int month = int.Parse(splits[1]);
                 int year = int.Parse(splits[2]) + 2000;

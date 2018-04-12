@@ -27,7 +27,7 @@ namespace AFIO.Geoposition
             _port = new SerialPort(portName, 9600);
             _port.DataReceived += PortOnDataReceived;
 
-            _cmdProcessor = new Dictionary<SentenceIdentifiers, Action<object[]>>()
+            _cmdProcessor = new Dictionary<SentenceIdentifiers, Action<object[]>>
             {
                 {SentenceIdentifiers.GLL, ProcessGLL}
             };
@@ -75,15 +75,15 @@ namespace AFIO.Geoposition
 
                 foreach (var line in lines)
                 {
-                    //try
-                    //{
-                    var result = NMEAParser.Parse(line);
-                    ProcessNMEASentence(result);
-                    //}
-                    //catch
-                    //{
-                    //    // TODO errors
-                    //}
+                    try
+                    {
+                        var result = NMEAParser.Parse(line);
+                        ProcessNMEASentence(result);
+                    }
+                    catch
+                    {
+                        // TODO errors
+                    }
                 }
             }
 
@@ -97,10 +97,10 @@ namespace AFIO.Geoposition
             if (standartSentence == null)
                 return;
 
-            var sentenceId = standartSentence.SentenceID;
+            var sentenceId = standartSentence.SentenceId;
 
             // DEBUG
-            Console.WriteLine("{0} {1}", standartSentence.TalkerID, sentenceId);
+            Console.WriteLine("GPS: {0} {1}", standartSentence.TalkerId, sentenceId);
 
             if (_cmdProcessor.ContainsKey(sentenceId))
                 _cmdProcessor[sentenceId](standartSentence.Parameters);
@@ -127,7 +127,7 @@ namespace AFIO.Geoposition
                 Longitude = -Longitude;
 
             // DEBUG
-            Console.WriteLine("{0:F.4} {1:F.4}", Latitude, Longitude);
+            Console.WriteLine("GPS: Latitude {0:F.4} Longitude {1:F.4}", Latitude, Longitude);
         }
     }
 }

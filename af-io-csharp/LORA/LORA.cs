@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
-using System.Text;
 
 namespace AFIO.Network
 {
@@ -15,9 +14,9 @@ namespace AFIO.Network
 
         struct Version
         {
-            public byte Series;
-            public byte VersionNumber1;
-            public byte VersionNumber2;
+            public byte Series { get; set; }
+            public byte VersionNumber1 { get; set; }
+            public byte VersionNumber2 { get; set; }
         }
 
         //readonly byte[] _kCommandReadOperatingParameters = {0xC1, 0xC1, 0xC1};
@@ -57,7 +56,7 @@ namespace AFIO.Network
                 //
                 //    var version = ParseVersion(_listBuffer.Dequeue(), _listBuffer.Dequeue(), _listBuffer.Dequeue(), _listBuffer.Dequeue());
                 //
-                //    Console.WriteLine("Version E{0:X} {1} {2}", (int)version.Series, version.VersionNumber1, version.VersionNumber2);
+                //    Console.WriteLine("LORA: Version E{0:X} {1} {2}", (int)version.Series, version.VersionNumber1, version.VersionNumber2);
                 //});
             }
         }
@@ -105,19 +104,21 @@ namespace AFIO.Network
 
             _dataReceivedCallback = callBack;
 
+            // TODO ReceivedBytesThreshold
+
             SendRawData(commandBytes);
         }
 
         void PortOnDataReceived(object sender, SerialDataReceivedEventArgs serialDataReceivedEventArgs)
         {
-            var bufferLength = _port.BytesToRead;
+            // TODO иногда бывает что BytesToRead реально больше _buffer.Length
+            var bufferLength = Math.Min(_port.BytesToRead, _buffer.Length);
             _port.Read(_buffer, 0, bufferLength);
 
             for (int i = 0; i < bufferLength; i++)
                 _listBuffer.Add(_buffer[i]);
 
-            if (_dataReceivedCallback != null)
-                _dataReceivedCallback();
+            _dataReceivedCallback?.Invoke();
         }
 
         void ProcessRecievedDataInDataMode()
@@ -135,14 +136,17 @@ namespace AFIO.Network
                             data[j] = _listBuffer[j];
 
                         var decodedDataLength = COBS.GetDecodedArraySize(data);
-                        var decodedData = new byte[decodedDataLength];
-                        COBS.Decode(data, dataLength, decodedData);
+                        if (decodedDataLength != 0)
+                        {
+                            var decodedData = new byte[decodedDataLength];
+                            COBS.Decode(data, dataLength, decodedData);
 
-                        var hash = _listBuffer[dataLength];
-                        var computedHash = HashCheck.Hash(decodedData);
+                            var hash = _listBuffer[dataLength];
+                            var computedHash = HashCheck.Hash(decodedData);
 
-                        if (hash == computedHash)
-                            OnPacketReceived(decodedData);
+                            if (hash == computedHash)
+                                OnPacketReceived(decodedData);
+                        }
                     }
 
                     _listBuffer.RemoveRange(0, i + 1);

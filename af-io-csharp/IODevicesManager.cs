@@ -8,10 +8,8 @@ namespace AFIO
     {
         const string _kSettingsFilePath = "io-settings.xml";
 
-        readonly Settings _settings;
-
-        public GPS GPS { get; private set; }
-        public LORA Network { get; private set; }
+        public GPS GPS { get; }
+        public LORA Network { get; }
 
         public IODevicesManager()
         {
@@ -19,22 +17,22 @@ namespace AFIO
                 throw new FileNotFoundException(_kSettingsFilePath);
 
             var serializer = new XmlSerializer<Settings>();
-            _settings = serializer.Deserialize(_kSettingsFilePath);
+            var settings = serializer.Deserialize(_kSettingsFilePath);
+
+            GPS = new GPS(settings.GPSSerialPortName);
+            Network = new LORA(settings.LoraSerialPortName, settings.LoraBaudRate);
         }
 
         public void Start()
         {
-            //GPS = new GPS(_settings.GPSSerialPortName);
             //GPS.Start();
-
-            Network = new LORA(_settings.LoraSerialPortName, _settings.LoraBaudRate);
             Network.Start();
         }
 
         public void Finish()
         {
             Network.Finish();
-            //GPS.Finish();
+            GPS.Finish();
         }
     }
 }
