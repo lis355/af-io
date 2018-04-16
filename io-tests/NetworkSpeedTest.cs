@@ -4,12 +4,12 @@ using System.Threading;
 
 namespace io_tests
 {
-    public class NetworkSpeedTest
+    public class NetworkSpeedTest : Test
     {
         const string _kSenderPortName = "COM5";
         const string _kRecieverPortName = "COM7";
 
-        public NetworkSpeedTest()
+        public override void Run()
         {
             var startTime = DateTime.Now;
 

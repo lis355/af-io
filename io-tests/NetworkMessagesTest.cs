@@ -6,7 +6,7 @@ using AFIO;
 
 namespace io_tests
 {
-    public class NetworkMessagesTest
+    public class NetworkMessagesTest : Test
     {
         [Serializable]
         public abstract class Message
@@ -19,9 +19,9 @@ namespace io_tests
             public string Text;
         }
 
-        readonly IODevicesManager _devicesManager;
+        IODevicesManager _devicesManager;
 
-        public NetworkMessagesTest()
+        public override void Run()
         {
             _devicesManager = new IODevicesManager();
             _devicesManager.Network.OnPacketReceived += NetworkOnPacketReceived;
@@ -48,7 +48,7 @@ namespace io_tests
 
                 var message = new TextMessage
                 {
-                    Text = string.Format("PRVT {0} {1}", messageNumber, DateTime.UtcNow.ToLongTimeString()) 
+                    Text = $"PRVT {messageNumber} {DateTime.UtcNow.ToLongTimeString()}"
                 };
 
                 messageNumber++;
