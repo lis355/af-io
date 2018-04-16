@@ -24,5 +24,7 @@ bin/
 exe*/
 dll/
 packages/
+build/
 _ReSharper*/
 #*.exe
+.vs/
